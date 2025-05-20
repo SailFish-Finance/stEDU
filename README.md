@@ -63,7 +63,7 @@ sequenceDiagram
 
 By combining `wstEDU`, the Blend Lending Protocol, and SailFish DEX, users can **loop stake and borrow to amplify exposure** and rewards.
 
-### 🔄 Example Recursive Strategy
+### Example Recursive Strategy
 
 1. **Stake native $EDU** → receive `stEDU`
 2. **Wrap `stEDU` to `wstEDU`** for DeFi usage
@@ -129,7 +129,7 @@ This gives the effective **annual yield**, assuming rewards are compounded into 
    ```
 
 
-## 🔁 Inspiration: stETH vs wstETH
+## Inspiration: stETH vs wstETH
 
 |            | stEDU          | wstEDU             |
 |------------|----------------|--------------------|

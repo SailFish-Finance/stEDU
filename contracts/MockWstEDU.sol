@@ -5,8 +5,8 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {stEDU} from "./stEDU.sol";
 
-/// @title wstEDU: Non-Rebasing Wrapped stEDU Token for DeFi Use
-contract wstEDU is ERC20, Ownable {
+/// @title MockWstEDU: Test version of wstEDU with exposed mint function
+contract MockWstEDU is ERC20, Ownable {
     stEDU public immutable stakeToken;
 
     constructor(
@@ -57,5 +57,10 @@ contract wstEDU is ERC20, Ownable {
         uint256 wstEDUAmount
     ) public view returns (uint256) {
         return (wstEDUAmount * stakeToken.index()) / 1e18;
+    }
+    
+    /// @notice Exposed mint function for testing
+    function mint(address to, uint256 amount) external onlyOwner {
+        _mint(to, amount);
     }
 }
