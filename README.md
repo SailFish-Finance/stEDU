@@ -5,16 +5,12 @@ This repo contains the smart contracts for:
 - `stEDU`: a **rebasing ERC20 token** that represents staked native $EDU (like stETH)
 - `wstEDU`: a **non-rebasing wrapped token** for composability with DeFi protocols (like wstETH)
 
----
-
 ## Purpose
 
 To increase the utility and demand for the native $EDU token on EDUCHAIN through:
 
 - **Auto-compounding staking rewards** distributed from SailFish DEX fees and $SAIL emissions
 - **Interoperability** across protocols like **Blend** (lending) and **SailFish** (DEX)
-
----
 
 ## Token Overview
 
@@ -23,7 +19,6 @@ To increase the utility and demand for the native $EDU token on EDUCHAIN through
 | `stEDU`  | Rebasing token representing staked $EDU  | Grows in balance daily | Wallet display, wrapping, unstaking    |
 | `wstEDU` | Wrapped non-rebasing version of stEDU    | Fixed balance, value grows | Blend Lending, LPs, integrations   |
 
----
 
 ## How It Works
 
@@ -32,7 +27,6 @@ To increase the utility and demand for the native $EDU token on EDUCHAIN through
 - Each reward deposit triggers a **rebase**, updating the global `index`
 - Users can wrap `stEDU` into `wstEDU` for use in DeFi protocols like Blend
 
----
 
 ## Example Flow
 
@@ -57,8 +51,6 @@ sequenceDiagram
     U->>SF: provide wstEDU in LP (optional)
 ```
 
----
-
 ## Leverage Loop Strategy with Blend + SailFish
 
 By combining `wstEDU`, the Blend Lending Protocol, and SailFish DEX, users can **loop stake and borrow to amplify exposure** and rewards.
@@ -82,7 +74,6 @@ By combining `wstEDU`, the Blend Lending Protocol, and SailFish DEX, users can *
 - Watch for **liquidation risks** as EDU price fluctuates
 - Ensure **accurate Oracle pricing** for `wstEDU`
 
----
 
 ## Contract Roles
 
@@ -94,7 +85,6 @@ By combining `wstEDU`, the Blend Lending Protocol, and SailFish DEX, users can *
   - Can delegate voting (if integrated with governance)
   - Can wrap/unwrap to use in DeFi
 
----
 
 ## APY Formula (Auto-Compounded)
 
@@ -104,7 +94,6 @@ APY = ((index_now / index_start) ^ (365 / days_elapsed) - 1) * 100%
 
 This gives the effective **annual yield**, assuming rewards are compounded into the `index`.
 
----
 
 ## Build
 
@@ -135,4 +124,4 @@ This gives the effective **annual yield**, assuming rewards are compounded into 
 |------------|----------------|--------------------|
 | Like       | stETH          | wstETH             |
 | Behavior   | Rebase (balance grows) | Value grows (index) |
-| Use        | Wallets, UX    | DeFi protocols     |
+| Use        | Wallets   | DeFi protocols     |
