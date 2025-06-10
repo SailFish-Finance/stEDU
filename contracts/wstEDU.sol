@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {stEDU} from "./stEDU.sol";
-import "hardhat/console.sol";
 
 /// @title wstEDU: Non-Rebasing Wrapped stEDU Token for DeFi Use
 contract wstEDU is ERC20, Ownable {
@@ -53,13 +52,26 @@ contract wstEDU is ERC20, Ownable {
     }
 
     /// @notice Get current value in EDU for a given wstEDU amount
-    function eduValue(uint256 wstEDUAmount) external view returns (uint256) {
-        return (wstEDUAmount * stakeToken.index()) / 1e18;
+    function wstEDUToEDU(uint256 wstEDUAmount) external view returns (uint256) {
+        uint256 totalwstEDU = totalSupply();
+        
+        // If no wstEDU tokens exist, return 0
+        if (totalwstEDU == 0) return 0;
+        
+        uint256 stEDUBalance = stakeToken.balanceOf(address(this));
+        
+        // Calculate stEDU amount (same as in unwrap)
+        uint256 stEDUAmount = (wstEDUAmount * stEDUBalance) / totalwstEDU;
+        
+        // Calculate EDU value (same as in stEDU.unstake)
+        return (stEDUAmount * stakeToken.index()) / 1e18;
     }
 
-    function getStEDUAmount(
-        uint256 wstEDUAmount
-    ) public view returns (uint256) {
-        return (wstEDUAmount * stakeToken.index()) / 1e18;
+    /// @notice Get the stEDU amount that would be returned for a given wstEDU amount
+    function getStEDUAmount(uint256 wstEDUAmount) public view returns (uint256) {
+        uint256 totalwstEDU = totalSupply();
+        if (totalwstEDU == 0) return 0;
+        uint256 stEDUBalance = stakeToken.balanceOf(address(this));
+        return (wstEDUAmount * stEDUBalance) / totalwstEDU;
     }
 }

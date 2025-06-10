@@ -97,7 +97,7 @@ describe("stEDU and wstEDU Integration", function () {
         initialStEDUBalance,
         initialIndex
       );
-      const initialWstEDUValue = await wstEDU.eduValue(initialWstEDUBalance);
+      const initialWstEDUValue = await wstEDU.wstEDUToEDU(initialWstEDUBalance);
 
       // Deposit rewards to trigger rebase
       await depositRewards(stEDU, owner, TEN_EDU);
@@ -116,7 +116,7 @@ describe("stEDU and wstEDU Integration", function () {
 
       // But the EDU value of both should increase
       const newStEDUValue = calculateEDUAmount(initialStEDUBalance, newIndex);
-      const newWstEDUValue = await wstEDU.eduValue(initialWstEDUBalance);
+      const newWstEDUValue = await wstEDU.wstEDUToEDU(initialWstEDUBalance);
 
       expect(newStEDUValue).to.be.gt(initialStEDUValue);
       expect(newWstEDUValue).to.be.gt(initialWstEDUValue);

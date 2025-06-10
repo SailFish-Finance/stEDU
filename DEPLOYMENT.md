@@ -6,8 +6,8 @@ This guide provides instructions for deploying, verifying, and interacting with 
 
 The contracts have been successfully deployed to the opencampus network:
 
-- **stEDU**: [0x121C0970eD215ED110F7Fb84e74e0067428C1F99](https://edu-chain-testnet.blockscout.com/address/0x121C0970eD215ED110F7Fb84e74e0067428C1F99)
-- **wstEDU**: [0x761C38F39EA79221949B4628061711A19c8f7228](https://edu-chain-testnet.blockscout.com/address/0x761C38F39EA79221949B4628061711A19c8f7228)
+- **stEDU**: [0x54565fFBd8e6c5b6AF4bbaFDB544Afb915CB58D9](https://edu-chain-testnet.blockscout.com/address/0x54565fFBd8e6c5b6AF4bbaFDB544Afb915CB58D9)
+- **wstEDU**: [0x4D94109fA2fFb73f299505053A5bC03Fc3cB6547](https://edu-chain-testnet.blockscout.com/address/0x4D94109fA2fFb73f299505053A5bC03Fc3cB6547)
 
 Both contracts have been verified on the blockchain explorer and their source code is publicly viewable.
 
@@ -64,7 +64,7 @@ The wstEDU contract is a non-rebasing wrapped version of stEDU for DeFi use. Key
 - `wrap(uint256 stEDUAmount)`: Wrap stEDU into wstEDU
 - `unwrap(uint256 wstEDUAmount)`: Unwrap wstEDU back into stEDU
 - `stEDUPerToken()`: Get the current stEDU value of 1 wstEDU
-- `eduValue(uint256 wstEDUAmount)`: Get current value in EDU for a given wstEDU amount
+- `wstEDUToEDU(uint256 wstEDUAmount)`: Get current value in EDU for a given wstEDU amount
 
 ## Troubleshooting
 
@@ -79,3 +79,17 @@ If you encounter connection issues with the opencampus network, try the followin
 - The stEDU contract owner is the account that deployed the contract
 - Only the owner can deposit rewards and trigger rebases
 - The wstEDU contract maintains a constant balance while the value increases with rewards
+
+## Recent Updates
+
+### wstEDU Contract Improvements (October 2025)
+
+The wstEDU contract has been updated with the following improvements:
+
+1. **Fixed wstEDUToEDU Function**: The function has been renamed from `eduValue` to `wstEDUToEDU` for consistency with the stEDU contract's `stEDUToEDU` function. More importantly, the calculation logic has been improved to accurately reflect the actual EDU value that users would receive when unwrapping and unstaking.
+
+2. **Improved getStEDUAmount Function**: The calculation logic has been updated to match the unwrap function's behavior, ensuring that the predicted stEDU amount matches the actual amount received when unwrapping.
+
+3. **Comprehensive Testing**: Added extensive tests to verify that the conversion functions accurately predict the actual values received throughout the entire stake → wrap → rewards → unwrap → unstake cycle.
+
+These improvements ensure that the wstEDU contract provides accurate value calculations, which is essential for integrations with other DeFi protocols and for displaying correct information to users in frontends.

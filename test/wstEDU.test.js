@@ -222,19 +222,44 @@ describe("wstEDU Contract", function () {
     });
 
     it("Should correctly calculate EDU value for wstEDU", async function () {
-      const wstEDUAmount = ethers.parseEther("10");
-      const index = await stEDU.index();
+      // First, wrap some stEDU to have a non-zero totalSupply
+      const user = users[0];
+      const stEDUBalance = await stEDU.balanceOf(user.address);
+      await wrapStEDU(stEDU, wstEDU, user, stEDUBalance);
       
-      const expectedEDUValue = (wstEDUAmount * index) / BigInt(1e18);
-      expect(await wstEDU.eduValue(wstEDUAmount)).to.equal(expectedEDUValue);
+      const wstEDUAmount = ethers.parseEther("10");
+      
+      // With our new implementation, wstEDUToEDU calculates based on the proportion
+      // of the total wstEDU supply, so we need to have some stEDU in the contract
+      const wstEDUToEDUValue = await wstEDU.wstEDUToEDU(wstEDUAmount);
+      
+      // The expected value should be proportional to the amount of stEDU in the contract
+      const totalWstEDU = await wstEDU.totalSupply();
+      const stEDUInContract = await stEDU.balanceOf(await wstEDU.getAddress());
+      const expectedStEDU = (wstEDUAmount * stEDUInContract) / totalWstEDU;
+      const expectedEDUValue = (expectedStEDU * await stEDU.index()) / BigInt(1e18);
+      
+      expect(wstEDUToEDUValue).to.equal(expectedEDUValue);
     });
 
     it("Should correctly calculate stEDU amount from wstEDU", async function () {
-      const wstEDUAmount = ethers.parseEther("10");
-      const index = await stEDU.index();
+      // First, wrap some stEDU to have a non-zero totalSupply
+      const user = users[0];
+      const stEDUBalance = await stEDU.balanceOf(user.address);
+      await wrapStEDU(stEDU, wstEDU, user, stEDUBalance);
       
-      const expectedStEDU = (wstEDUAmount * index) / BigInt(1e18);
-      expect(await wstEDU.getStEDUAmount(wstEDUAmount)).to.equal(expectedStEDU);
+      const wstEDUAmount = ethers.parseEther("10");
+      
+      // With our new implementation, getStEDUAmount calculates based on the proportion
+      // of the total wstEDU supply, so we need to have some stEDU in the contract
+      const getStEDUValue = await wstEDU.getStEDUAmount(wstEDUAmount);
+      
+      // The expected value should be proportional to the amount of stEDU in the contract
+      const totalWstEDU = await wstEDU.totalSupply();
+      const stEDUInContract = await stEDU.balanceOf(await wstEDU.getAddress());
+      const expectedStEDU = (wstEDUAmount * stEDUInContract) / totalWstEDU;
+      
+      expect(getStEDUValue).to.equal(expectedStEDU);
     });
   });
 });
