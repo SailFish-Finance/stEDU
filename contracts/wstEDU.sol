@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {stEDU} from "./stEDU.sol";
+import "hardhat/console.sol";
 
 /// @title wstEDU: Non-Rebasing Wrapped stEDU Token for DeFi Use
 contract wstEDU is ERC20, Ownable {
@@ -30,13 +31,16 @@ contract wstEDU is ERC20, Ownable {
     function unwrap(uint256 wstEDUAmount) external returns (uint256) {
         require(wstEDUAmount > 0, "Nothing to unwrap");
 
-        uint256 stEDUAmount = (wstEDUAmount * stakeToken.index()) / 1e18;
+        // Calculate what percentage of total wstEDU supply is being unwrapped
+        // Then return that same percentage of the contract's stEDU balance
+        uint256 totalwstEDU = totalSupply();
+        uint256 stEDUBalance = stakeToken.balanceOf(address(this));
+
+        // Calculate stEDU to return based on proportion
+        uint256 stEDUAmount = (wstEDUAmount * stEDUBalance) / totalwstEDU;
+
         _burn(msg.sender, wstEDUAmount);
-        require(
-            stakeToken.balanceOf(address(this)) >= stEDUAmount,
-            "Insufficient stEDU in wrapper"
-        );
-        
+
         // Transfer stEDU back to the user
         stakeToken.transfer(msg.sender, stEDUAmount);
 
