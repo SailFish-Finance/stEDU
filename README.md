@@ -9,6 +9,14 @@ This repository contains the smart contracts for `stEDU`, a liquid staking token
 - **ERC4626 Compliant**: Implements the ERC4626 Tokenized Vault Standard for better composability
 - **Surplus Sync Mechanism**: `sync()` function lets anyone fold accidental WEDU donations into the index
 
+## Deployed Contracts
+
+The contracts have been successfully deployed to the opencampus network:
+
+- **stEDU**: [0x54565fFBd8e6c5b6AF4bbaFDB544Afb915CB58D9](https://edu-chain-testnet.blockscout.com/address/0x54565fFBd8e6c5b6AF4bbaFDB544Afb915CB58D9)
+- **wstEDU**: [0x4D94109fA2fFb73f299505053A5bC03Fc3cB6547](https://edu-chain-testnet.blockscout.com/address/0x4D94109fA2fFb73f299505053A5bC03Fc3cB6547)
+
+
 ## How It Works
 
 ### Staking and Rewards

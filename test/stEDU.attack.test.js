@@ -90,7 +90,10 @@ describe("stEDU Attack Tests", function () {
 
       // Verify attacker received their stake plus rewards
       const expectedEDUReceived = attackerStakeAmount + attackerExpectedReward;
-      expect(eduReceived).to.be.closeTo(expectedEDUReceived, ethers.parseEther("0.000000001"));
+      expect(eduReceived).to.be.closeTo(
+        expectedEDUReceived,
+        ethers.parseEther("0.000000001")
+      );
 
       // The key point is that the attacker had to wait the full unbonding period,
       // which prevents flash loan attacks and quick front-running
@@ -125,7 +128,7 @@ describe("stEDU Attack Tests", function () {
   describe("Reward Inflation Tests", function () {
     it("Should prevent index manipulation through small deposits", async function () {
       const user = users[0];
-      const stakeAmount = HUNDRED_EDU;
+      const stakeAmount = ONE_EDU;
       const tinyStakeAmount = 1n; // Smallest possible amount
 
       // User stakes a normal amount
@@ -138,7 +141,7 @@ describe("stEDU Attack Tests", function () {
       const initialIndex = await stEDU.index();
 
       // Owner deposits rewards
-      const rewardAmount = TEN_EDU;
+      const rewardAmount = ethers.parseEther("0.1"); // 0.1 EDU
       await stEDU.connect(owner).depositRewards({ value: rewardAmount });
 
       // Get new index
@@ -160,8 +163,8 @@ describe("stEDU Attack Tests", function () {
 
     it("Should handle extreme values without overflow", async function () {
       const user = users[0];
-      const stakeAmount = HUNDRED_EDU;
-      const largerStakeAmount = HUNDRED_EDU * 10n; // Larger but not extreme
+      const stakeAmount = ONE_EDU;
+      const largerStakeAmount = ONE_EDU * 2n; // Larger but not extreme
       const tinyRewardAmount = 1n; // Smallest possible reward
 
       // User stakes a normal amount
@@ -177,21 +180,23 @@ describe("stEDU Attack Tests", function () {
 
       // Now test the opposite: tiny stake, moderate reward
       const tinyStakeAmount = 1n;
-      const moderateRewardAmount = ONE_EDU;
+      const moderateRewardAmount = ethers.parseEther("0.1"); // 0.1 EDU
 
       // New user stakes tiny amount
       await stEDU.connect(users[1]).stake({ value: tinyStakeAmount });
 
       // Owner deposits moderate reward
-      await stEDU.connect(owner).depositRewards({ value: moderateRewardAmount });
+      await stEDU
+        .connect(owner)
+        .depositRewards({ value: moderateRewardAmount });
 
       // The transaction should complete without reverting due to overflow
     });
 
     it("Should prevent donation manipulation through sync", async function () {
       const user = users[0];
-      const stakeAmount = HUNDRED_EDU;
-      const donationAmount = TEN_EDU;
+      const stakeAmount = ONE_EDU;
+      const donationAmount = ethers.parseEther("0.1"); // 0.1 EDU
 
       // User stakes EDU
       await stEDU.connect(user).stake({ value: stakeAmount });
@@ -238,7 +243,7 @@ describe("stEDU Attack Tests", function () {
       );
 
       // Stake EDU from the attacker
-      const stakeAmount = HUNDRED_EDU;
+      const stakeAmount = ONE_EDU;
       await stEDU.connect(attacker).stake({ value: stakeAmount });
 
       // Transfer stEDU to the malicious contract
@@ -261,34 +266,39 @@ describe("stEDU Attack Tests", function () {
   describe("Direct WEDU Transfer Tests", function () {
     it("Should correctly handle direct WEDU transfers through sync", async function () {
       const user = users[0];
-      const stakeAmount = HUNDRED_EDU;
-      const directWEDUAmount = TEN_EDU;
-      
+      const stakeAmount = ONE_EDU;
+      const directWEDUAmount = ethers.parseEther("0.1"); // 0.1 EDU
+
       // User stakes EDU
       await stEDU.connect(user).stake({ value: stakeAmount });
-      
+
       // Get initial index
       const initialIndex = await stEDU.index();
-      
+
       // Attacker sends WEDU directly to the contract
       await mockWEDU.connect(attacker).deposit({ value: directWEDUAmount });
-      await mockWEDU.connect(attacker).transfer(await stEDU.getAddress(), directWEDUAmount);
-      
+      await mockWEDU
+        .connect(attacker)
+        .transfer(await stEDU.getAddress(), directWEDUAmount);
+
       // Verify WEDU balance increased but index hasn't changed yet
       const weduBalance = await mockWEDU.balanceOf(await stEDU.getAddress());
       const expectedBalance = stakeAmount + directWEDUAmount;
       expect(weduBalance).to.equal(expectedBalance);
       expect(await stEDU.index()).to.equal(initialIndex);
-      
+
       // Call sync to incorporate the surplus WEDU
       await stEDU.connect(attacker).sync();
-      
+
       // Verify index increased correctly
       const newIndex = await stEDU.index();
       const totalSupply = await stEDU.totalSupply();
-      const expectedIndexIncrease = calculateIndexIncrease(directWEDUAmount, totalSupply);
+      const expectedIndexIncrease = calculateIndexIncrease(
+        directWEDUAmount,
+        totalSupply
+      );
       expect(newIndex - initialIndex).to.equal(expectedIndexIncrease);
-      
+
       // Verify the user's stEDU value increased
       const stEDUBalance = await stEDU.balanceOf(user.address);
       const eduValue = await stEDU.stEDUToEDU(stEDUBalance);
@@ -296,56 +306,69 @@ describe("stEDU Attack Tests", function () {
       expect(eduValue).to.equal(stakeAmount + directWEDUAmount);
     });
   });
-  
+
   describe("Security Mechanism Tests", function () {
     it("Should prevent operations when paused", async function () {
       const user = users[0];
-      const stakeAmount = HUNDRED_EDU;
-      
+      const stakeAmount = ONE_EDU;
+
       // Pause the contract
       await stEDU.connect(owner).pause();
-      
+
       // Verify staking is prevented
-      await expect(stEDU.connect(user).stake({ value: stakeAmount }))
-        .to.be.revertedWithCustomError(stEDU, "EnforcedPause");
-      
+      await expect(
+        stEDU.connect(user).stake({ value: stakeAmount })
+      ).to.be.revertedWithCustomError(stEDU, "EnforcedPause");
+
       // Stake some EDU (after unpausing)
       await stEDU.connect(owner).unpause();
       await stEDU.connect(user).stake({ value: stakeAmount });
       const stEDUBalance = await stEDU.balanceOf(user.address);
-      
+
       // Pause again and verify unstaking is prevented
       await stEDU.connect(owner).pause();
       await advanceTimeAfterUnstakeDelay();
-      await expect(stEDU.connect(user).unstake(stEDUBalance))
-        .to.be.revertedWithCustomError(stEDU, "EnforcedPause");
-      
+      await expect(
+        stEDU.connect(user).unstake(stEDUBalance)
+      ).to.be.revertedWithCustomError(stEDU, "EnforcedPause");
+
       // Verify rewards are prevented while paused
-      await expect(stEDU.connect(owner).depositRewards({ value: TEN_EDU }))
-        .to.be.revertedWithCustomError(stEDU, "EnforcedPause");
-      
+      await expect(
+        stEDU.connect(owner).depositRewards({ value: ethers.parseEther("0.1") })
+      ).to.be.revertedWithCustomError(stEDU, "EnforcedPause");
+
       // Verify sync is prevented while paused
-      await mockWEDU.connect(attacker).deposit({ value: TEN_EDU });
-      await mockWEDU.connect(attacker).transfer(await stEDU.getAddress(), TEN_EDU);
-      await expect(stEDU.connect(attacker).sync())
-        .to.be.revertedWithCustomError(stEDU, "EnforcedPause");
+      await mockWEDU
+        .connect(attacker)
+        .deposit({ value: ethers.parseEther("0.1") });
+      await mockWEDU
+        .connect(attacker)
+        .transfer(await stEDU.getAddress(), ethers.parseEther("0.1"));
+      await expect(
+        stEDU.connect(attacker).sync()
+      ).to.be.revertedWithCustomError(stEDU, "EnforcedPause");
     });
-    
+
     it("Should prevent non-owners from calling privileged functions", async function () {
       // Verify non-owner cannot pause
-      await expect(stEDU.connect(attacker).pause())
-        .to.be.revertedWithCustomError(stEDU, "OwnableUnauthorizedAccount");
-      
+      await expect(
+        stEDU.connect(attacker).pause()
+      ).to.be.revertedWithCustomError(stEDU, "OwnableUnauthorizedAccount");
+
       // Verify non-owner cannot unpause
       await stEDU.connect(owner).pause();
-      await expect(stEDU.connect(attacker).unpause())
-        .to.be.revertedWithCustomError(stEDU, "OwnableUnauthorizedAccount");
+      await expect(
+        stEDU.connect(attacker).unpause()
+      ).to.be.revertedWithCustomError(stEDU, "OwnableUnauthorizedAccount");
       await stEDU.connect(owner).unpause();
-      
+
       // Verify non-owner cannot deposit rewards
-      await stEDU.connect(users[0]).stake({ value: HUNDRED_EDU });
-      await expect(stEDU.connect(attacker).depositRewards({ value: TEN_EDU }))
-        .to.be.revertedWithCustomError(stEDU, "OwnableUnauthorizedAccount");
+      await stEDU.connect(users[0]).stake({ value: ONE_EDU });
+      await expect(
+        stEDU
+          .connect(attacker)
+          .depositRewards({ value: ethers.parseEther("0.1") })
+      ).to.be.revertedWithCustomError(stEDU, "OwnableUnauthorizedAccount");
     });
   });
 });

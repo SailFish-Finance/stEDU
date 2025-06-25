@@ -22,7 +22,7 @@ contract MaliciousReceiver {
         // Try to reenter if we're in the middle of an attack
         if (attacking) {
             // Call unstake again to attempt reentrancy
-            stEDU.call(abi.encodeWithSignature("unstake(uint256)", 1));
+            (bool success,) = stEDU.call(abi.encodeWithSignature("unstake(uint256)", 1));
             // We don't care if it succeeds, we're just testing if reentrancy is possible
         }
     }
@@ -35,7 +35,7 @@ contract MaliciousReceiver {
         attacking = true;
         // Call unstake, which will send EDU back to this contract
         // During the receive function, we'll try to reenter
-        stEDU.call(abi.encodeWithSignature("unstake(uint256)", amount));
+        (bool success,) = stEDU.call(abi.encodeWithSignature("unstake(uint256)", amount));
         attacking = false;
     }
 }
