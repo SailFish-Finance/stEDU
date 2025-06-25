@@ -12,13 +12,9 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "npx hardhat test",
-    "test:all": "node test/run-tests.js",
-    "test:stedu": "npx hardhat test test/stEDU.test.js",
-    "test:wstedu": "npx hardhat test test/wstEDU.test.js",
+    "test": "npx hardhat test test/integration.test.js",
     "test:integration": "npx hardhat test test/integration.test.js",
-    "test:fullcycle": "npx hardhat test test/fullcycle.test.js",
-    "test:edgecases": "npx hardhat test test/edgecases.test.js"
+    "test:fullcycle": "npx hardhat test test/multi_user_fullcycle.test.js"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
