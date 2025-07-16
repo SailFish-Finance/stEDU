@@ -172,18 +172,46 @@ contract stEDU is ERC4626, Ownable, Pausable, ReentrancyGuard {
     /*//////////////////////////////////////////////////////////////
                     VIEW FUNCTIONS & 4626 CONVERSIONS
     //////////////////////////////////////////////////////////////*/
+    
+    /**
+     * @notice Returns expected assets based on internal index accounting
+     * @dev This ensures ERC4626 compatibility and prevents MEV attacks
+     *      Ignores any donated WEDU until sync() is manually called
+     */
     function totalAssets() public view override returns (uint256) {
+        return (index * totalSupply()) / 1e18;
+    }
+    
+    /**
+     * @notice Returns actual WEDU balance in the contract
+     * @dev Use this to check for accidental donations
+     */
+    function getActualAssets() external view returns (uint256) {
         return wedu.balanceOf(address(this));
     }
+    
+    /**
+     * @notice Returns surplus WEDU not yet reflected in index
+     * @dev If > 0, someone can call sync() to distribute to all stakers
+     */
+    function getSurplus() external view returns (uint256) {
+        uint256 expected = totalAssets();
+        uint256 actual = wedu.balanceOf(address(this));
+        return actual > expected ? actual - expected : 0;
+    }
+
     function convertToShares(uint256 assets) public view override returns (uint256) {
         return (assets * 1e18) / index;
     }
+
     function convertToAssets(uint256 shares) public view override returns (uint256) {
         return (shares * index) / 1e18;
     }
+
     function stEDUToEDU(uint256 stEDUAmount) external view returns (uint256) {
         return (stEDUAmount * index) / 1e18;
     }
+    
     function EDUToStEDU(uint256 eduAmount) external view returns (uint256) {
         return (eduAmount * 1e18) / index;
     }
