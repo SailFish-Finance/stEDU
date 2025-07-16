@@ -27,6 +27,9 @@ contract stEDU is ERC4626, Ownable, Pausable, ReentrancyGuard {
     //////////////////////////////////////////////////////////////*/
     uint256 public constant INITIAL_INDEX  = 1e18;
     uint256 public constant UNSTAKE_DELAY  = 7 days; // per‑deposit unbonding period
+    uint256 public maxRewardRate = 200; // 2% in basis points
+    uint256 public constant MAX_DEPOSITS_PER_USER = 30;
+    uint256 public constant MIN_STAKE_AMOUNT = 10;
 
     /*//////////////////////////////////////////////////////////////
                                   STATE
@@ -67,7 +70,9 @@ contract stEDU is ERC4626, Ownable, Pausable, ReentrancyGuard {
     //////////////////////////////////////////////////////////////*/
     /// @notice Stake native EDU and mint stEDU. Each deposit is timestamped so it can be withdrawn after `UNSTAKE_DELAY`.
     function stake() external payable whenNotPaused nonReentrant returns (uint256) {
-        require(msg.value > 0, "Must send EDU");
+        require(msg.value >= MIN_STAKE_AMOUNT, "Minimum stake required");
+        require(_deposits[msg.sender].length < MAX_DEPOSITS_PER_USER, "Max deposits reached");
+
 
         uint256 shares = (msg.value * 1e18) / index; // shares minted @ current price
         wedu.deposit{value: msg.value}();            // wrap EDU ➜ WEDU
@@ -121,6 +126,9 @@ contract stEDU is ERC4626, Ownable, Pausable, ReentrancyGuard {
     function depositRewards() external payable onlyOwner whenNotPaused nonReentrant {
         require(msg.value > 0, "No reward sent");
         require(totalSupply() > 0, "Nothing staked");
+
+        uint256 maxReward = (totalAssets() * maxRewardRate) / 10000;
+        require(msg.value <= maxReward, "Reward exceeds cap");
 
         wedu.deposit{value: msg.value}();
         uint256 deltaIndex = (msg.value * 1e18) / totalSupply();
