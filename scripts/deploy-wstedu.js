@@ -16,7 +16,7 @@ async function main() {
   // Deploy MockWEDU contract first
   console.log("\nDeploying wstEDU contract...");
   const WstEDU = await ethers.getContractFactory("wstEDU");
-  const wstEDU = await WstEDU.deploy("0xc5188c37D751efF5019D91b11686eCfAb300b494");
+  const wstEDU = await WstEDU.deploy("0x4cF5944B5778Eb70272f4626360301521591F674");
   await wstEDU.waitForDeployment();
 
   const wstEDUAddress = await wstEDU.getAddress();

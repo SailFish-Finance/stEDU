@@ -13,9 +13,8 @@ This repository contains the smart contracts for `stEDU`, a liquid staking token
 
 The contracts have been successfully deployed to the opencampus network:
 
-- **stEDU**: [0xc5188c37D751efF5019D91b11686eCfAb300b494](https://edu-chain-testnet.blockscout.com/address/0xc5188c37D751efF5019D91b11686eCfAb300b494)
-- **wstEDU**: [0x975BB5e01B1F709f974Aa5b9DAF01805bD532eC1](https://edu-chain-testnet.blockscout.com/address/0x975BB5e01B1F709f974Aa5b9DAF01805bD532eC1)
-- **MockEDU**: [0xc0b2692D9D567F4202E963D5562E81aAf0a23d23](https://edu-chain-testnet.blockscout.com/address/0xc0b2692D9D567F4202E963D5562E81aAf0a23d23)
+- **stEDU**: [0x4cF5944B5778Eb70272f4626360301521591F674](https://edu-chain-testnet.blockscout.com/address/0x4cF5944B5778Eb70272f4626360301521591F674)
+- **wstEDU**: [0x6c33254a83df2be45CdA09Bba2DBceB30a4a4C99](https://edu-chain-testnet.blockscout.com/address/0x6c33254a83df2be45CdA09Bba2DBceB30a4a4C99)
 
 
 ## How It Works
