@@ -10,9 +10,13 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 
 interface WEDU {
     function deposit() external payable;
+
     function withdraw(uint256) external;
+
     function balanceOf(address) external view returns (uint256);
+
     function approve(address, uint256) external returns (bool);
+
     function transfer(address, uint256) external returns (bool);
 }
 
@@ -25,8 +29,8 @@ contract stEDU is ERC4626, Ownable, Pausable, ReentrancyGuard {
     /*//////////////////////////////////////////////////////////////
                                 CONSTANTS
     //////////////////////////////////////////////////////////////*/
-    uint256 public constant INITIAL_INDEX  = 1e18;
-    uint256 public constant UNSTAKE_DELAY  = 7 days; // per‑deposit unbonding period
+    uint256 public constant INITIAL_INDEX = 1e18;
+    uint256 public constant UNSTAKE_DELAY = 7 days; // per‑deposit unbonding period
     uint256 public maxRewardRate = 200; // 2% in basis points
     uint256 public constant MAX_DEPOSITS_PER_USER = 30;
     uint256 public constant MIN_STAKE_AMOUNT = 10;
@@ -34,58 +38,84 @@ contract stEDU is ERC4626, Ownable, Pausable, ReentrancyGuard {
     /*//////////////////////////////////////////////////////////////
                                   STATE
     //////////////////////////////////////////////////////////////*/
-    uint256 public index = INITIAL_INDEX;          // share‑price, starts at 1 EDU per share
-    WEDU    public immutable wedu;                 // wrapped native EDU token
+    uint256 public index = INITIAL_INDEX; // share‑price, starts at 1 EDU per share
+    WEDU public immutable wedu; // wrapped native EDU token
 
-    struct DepositInfo { uint256 shares; uint256 timestamp; }
+    struct DepositInfo {
+        uint256 shares;
+        uint256 timestamp;
+    }
     mapping(address => DepositInfo[]) private _deposits; // user FIFO buckets
 
     /*//////////////////////////////////////////////////////////////
                                   EVENTS
     //////////////////////////////////////////////////////////////*/
-    event Staked      (address indexed user, uint256 eduAmount, uint256 stEDUAmount);
-    event Unstaked    (address indexed user, uint256 eduReturned, uint256 stEDUBurned);
-    event RewardsDeposited(address indexed caller, uint256 rewardAmount, uint256 newIndex);
-    event SurplusSynced (uint256 surplusWEDU, uint256 newIndex);
+    event Staked(address indexed user, uint256 eduAmount, uint256 stEDUAmount);
+    event Unstaked(
+        address indexed user,
+        uint256 eduReturned,
+        uint256 stEDUBurned
+    );
+    event RewardsDeposited(
+        address indexed caller,
+        uint256 rewardAmount,
+        uint256 newIndex
+    );
+    event SurplusSynced(uint256 surplusWEDU, uint256 newIndex);
 
     /*//////////////////////////////////////////////////////////////
                                CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
-    constructor(address _wedu)
-        ERC4626(IERC20(_wedu))
-        ERC20("Staked EDU", "stEDU")
-        Ownable(msg.sender)
-    {
+    constructor(
+        address _wedu
+    ) ERC4626(IERC20(_wedu)) ERC20("Staked EDU", "stEDU") Ownable(msg.sender) {
         wedu = WEDU(_wedu);
     }
 
     /*//////////////////////////////////////////////////////////////
                             PAUSE / UNPAUSE
     //////////////////////////////////////////////////////////////*/
-    function pause() external onlyOwner { _pause(); }
-    function unpause() external onlyOwner { _unpause(); }
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
+    }
 
     /*//////////////////////////////////////////////////////////////
                                 STAKING
     //////////////////////////////////////////////////////////////*/
     /// @notice Stake native EDU and mint stEDU. Each deposit is timestamped so it can be withdrawn after `UNSTAKE_DELAY`.
-    function stake() external payable whenNotPaused nonReentrant returns (uint256) {
+    function stake()
+        external
+        payable
+        whenNotPaused
+        nonReentrant
+        returns (uint256)
+    {
         require(msg.value >= MIN_STAKE_AMOUNT, "Minimum stake required");
-        require(_deposits[msg.sender].length < MAX_DEPOSITS_PER_USER, "Max deposits reached");
-
+        require(
+            _deposits[msg.sender].length < MAX_DEPOSITS_PER_USER,
+            "Max deposits reached"
+        );
 
         uint256 shares = (msg.value * 1e18) / index; // shares minted @ current price
-        wedu.deposit{value: msg.value}();            // wrap EDU ➜ WEDU
+        wedu.deposit{value: msg.value}(); // wrap EDU ➜ WEDU
 
         _mint(msg.sender, shares);
-        _deposits[msg.sender].push(DepositInfo({shares: shares, timestamp: block.timestamp}));
+        _deposits[msg.sender].push(
+            DepositInfo({shares: shares, timestamp: block.timestamp})
+        );
 
         emit Staked(msg.sender, msg.value, shares);
         return shares;
     }
 
     /// @notice Unstake only the shares whose individual deposit timestamps are ≥ `UNSTAKE_DELAY`.
-    function unstake(uint256 shares) external whenNotPaused nonReentrant returns (uint256) {
+    function unstake(
+        uint256 shares
+    ) external whenNotPaused nonReentrant returns (uint256) {
         require(shares > 0, "Zero shares");
         require(balanceOf(msg.sender) >= shares, "Insufficient stEDU");
 
@@ -102,10 +132,13 @@ contract stEDU is ERC4626, Ownable, Pausable, ReentrancyGuard {
                 if (b.shares == 0) {
                     buckets[i] = buckets[buckets.length - 1];
                     buckets.pop();
-                    len--; continue; // inspect element that got swapped in
+                    len--;
+                    continue; // inspect element that got swapped in
                 }
             }
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
         require(unlocked == shares, "Requested amount still locked");
 
@@ -119,11 +152,29 @@ contract stEDU is ERC4626, Ownable, Pausable, ReentrancyGuard {
         return eduToReturn;
     }
 
+    function depositCount(address user) external view returns (uint256) {
+        return _deposits[user].length;
+    }
+
+    function depositOf(
+        address user,
+        uint256 i
+    ) external view returns (uint256 shares, uint256 timestamp) {
+        DepositInfo storage d = _deposits[user][i];
+        return (d.shares, d.timestamp);
+    }
+
     /*//////////////////////////////////////////////////////////////
                                 REWARDS
     //////////////////////////////////////////////////////////////*/
     /// @notice Push new EDU rewards; boosts `index`. Only callable by owner/treasury.
-    function depositRewards() external payable onlyOwner whenNotPaused nonReentrant {
+    function depositRewards()
+        external
+        payable
+        onlyOwner
+        whenNotPaused
+        nonReentrant
+    {
         require(msg.value > 0, "No reward sent");
         require(totalSupply() > 0, "Nothing staked");
 
@@ -143,9 +194,9 @@ contract stEDU is ERC4626, Ownable, Pausable, ReentrancyGuard {
     ///         the tokens stranded. Callable by anyone.
     function sync() external whenNotPaused nonReentrant {
         uint256 expected = (index * totalSupply()) / 1e18;
-        uint256 actual   = wedu.balanceOf(address(this));
+        uint256 actual = wedu.balanceOf(address(this));
         require(actual > expected, "No surplus");
-        uint256 surplus  = actual - expected;
+        uint256 surplus = actual - expected;
         require(totalSupply() > 0, "No shares");
 
         index += (surplus * 1e18) / totalSupply();
@@ -159,20 +210,31 @@ contract stEDU is ERC4626, Ownable, Pausable, ReentrancyGuard {
     function deposit(uint256, address) public pure override returns (uint256) {
         revert("use stake/unstake");
     }
+
     function mint(uint256, address) public pure override returns (uint256) {
         revert("use stake/unstake");
     }
-    function withdraw(uint256, address, address) public pure override returns (uint256) {
+
+    function withdraw(
+        uint256,
+        address,
+        address
+    ) public pure override returns (uint256) {
         revert("use stake/unstake");
     }
-    function redeem(uint256, address, address) public pure override returns (uint256) {
+
+    function redeem(
+        uint256,
+        address,
+        address
+    ) public pure override returns (uint256) {
         revert("use stake/unstake");
     }
 
     /*//////////////////////////////////////////////////////////////
                     VIEW FUNCTIONS & 4626 CONVERSIONS
     //////////////////////////////////////////////////////////////*/
-    
+
     /**
      * @notice Returns expected assets based on internal index accounting
      * @dev This ensures ERC4626 compatibility and prevents MEV attacks
@@ -181,7 +243,7 @@ contract stEDU is ERC4626, Ownable, Pausable, ReentrancyGuard {
     function totalAssets() public view override returns (uint256) {
         return (index * totalSupply()) / 1e18;
     }
-    
+
     /**
      * @notice Returns actual WEDU balance in the contract
      * @dev Use this to check for accidental donations
@@ -189,7 +251,7 @@ contract stEDU is ERC4626, Ownable, Pausable, ReentrancyGuard {
     function getActualAssets() external view returns (uint256) {
         return wedu.balanceOf(address(this));
     }
-    
+
     /**
      * @notice Returns surplus WEDU not yet reflected in index
      * @dev If > 0, someone can call sync() to distribute to all stakers
@@ -200,18 +262,22 @@ contract stEDU is ERC4626, Ownable, Pausable, ReentrancyGuard {
         return actual > expected ? actual - expected : 0;
     }
 
-    function convertToShares(uint256 assets) public view override returns (uint256) {
+    function convertToShares(
+        uint256 assets
+    ) public view override returns (uint256) {
         return (assets * 1e18) / index;
     }
 
-    function convertToAssets(uint256 shares) public view override returns (uint256) {
+    function convertToAssets(
+        uint256 shares
+    ) public view override returns (uint256) {
         return (shares * index) / 1e18;
     }
 
     function stEDUToEDU(uint256 stEDUAmount) external view returns (uint256) {
         return (stEDUAmount * index) / 1e18;
     }
-    
+
     function EDUToStEDU(uint256 eduAmount) external view returns (uint256) {
         return (eduAmount * 1e18) / index;
     }
