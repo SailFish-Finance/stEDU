@@ -30,7 +30,7 @@ contract stEDU is ERC4626, Ownable, Pausable, ReentrancyGuard {
                                 CONSTANTS
     //////////////////////////////////////////////////////////////*/
     uint256 public constant INITIAL_INDEX = 1e18;
-    uint256 public constant UNSTAKE_DELAY = 7 days; // per‑deposit unbonding period
+    uint256 public constant UNSTAKE_DELAY = 10 minutes; // per‑deposit unbonding period
     uint256 public maxRewardRate = 200; // 2% in basis points
     uint256 public constant MAX_DEPOSITS_PER_USER = 30;
     uint256 public constant MIN_STAKE_AMOUNT = 10;
