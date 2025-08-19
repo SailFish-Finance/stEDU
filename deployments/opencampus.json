@@ -1,8 +1,7 @@
 {
   "network": "opencampus",
   "addresses": {
-    "mockWEDU": "0xc0b2692D9D567F4202E963D5562E81aAf0a23d23",
-    "stEDU": "0xc5188c37D751efF5019D91b11686eCfAb300b494"
+    "wstEDUAddress": "0x975BB5e01B1F709f974Aa5b9DAF01805bD532eC1"
   },
-  "timestamp": "2025-06-25T12:09:39.398Z"
+  "timestamp": "2025-08-19T21:58:00.319Z"
 }
